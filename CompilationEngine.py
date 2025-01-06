@@ -34,6 +34,12 @@ class CompilationEngine:
         for i in range(self.indents):
             self.output_stream.write('\t')
 
+    def print_type(self):
+        if self.input_stream.token_type == 'keyword':
+            self.print_keyword()
+        else:
+            self.print_identifier()
+
     def compile_class(self) -> None:
         """Compiles a complete class."""
         # Your code goes here!
@@ -44,7 +50,9 @@ class CompilationEngine:
         self.print_symbol()
 
         self.compile_class_var_dec()
-        while self.input_stream.keyword() == 'function':
+        while self.input_stream.keyword() == 'function' \
+                or self.input_stream.keyword() == 'method' \
+                or self.input_stream.keyword() == 'constructor':
             self.compile_subroutine()
 
         self.print_symbol()
@@ -66,10 +74,7 @@ class CompilationEngine:
 
     def print_vars(self):
         self.print_keyword()
-        if self.input_stream.token_type == 'keyword':
-            self.print_keyword()
-        else:
-            self.print_identifier()
+        self.print_type()
         self.print_identifier()
         while self.input_stream.symbol() != ';':
             self.print_symbol()
@@ -85,7 +90,7 @@ class CompilationEngine:
         self.print_start('subroutineDec')
 
         self.print_keyword()
-        self.print_keyword()
+        self.print_type()
         self.print_identifier()
         self.print_symbol()
         self.compile_parameter_list()
@@ -94,7 +99,7 @@ class CompilationEngine:
         self.print_start('subroutineBody')
         self.print_symbol()
         self.compile_var_dec()
-
+        self.compile_statements()
         self.print_symbol()
         self.print_end('subroutineBody')
 
@@ -106,54 +111,146 @@ class CompilationEngine:
         enclosing "()".
         """
         # Your code goes here!
+        self.print_start('parameterList')
+        while self.input_stream.token_type is not 'symbol':
+            self.print_type()
+            self.print_identifier()
+            self.print_symbol()
+        self.print_end('parameterList')
         pass
 
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
         # Your code goes here!
-        self.print_start('varDec')
-
         while self.input_stream.keyword() == 'var':
+            self.print_start('varDec')
             self.print_vars()
-
-        self.print_end('varDec')
+            self.print_end('varDec')
         pass
+
+    def is_statement(self) -> bool:
+        return self.input_stream.keyword() == 'if' \
+            or self.input_stream.keyword() == 'while' \
+            or self.input_stream.keyword() == 'let' \
+            or self.input_stream.keyword() == 'do' \
+            or self.input_stream.keyword() == 'return'
 
     def compile_statements(self) -> None:
         """Compiles a sequence of statements, not including the enclosing 
         "{}".
         """
         # Your code goes here!
+        while self.is_statement():
+            if self.input_stream.keyword() == 'while':
+                self.compile_while()
+            if self.input_stream.keyword() == 'let':
+                self.compile_let()
+            if self.input_stream.keyword() == 'do':
+                self.compile_do()
+            if self.input_stream.keyword() == 'return':
+                self.compile_return()
+            if self.input_stream.keyword() == 'if':
+                self.compile_if()
+        pass
+
+    def compile_subroutine_call(self) -> None:
+        if self.input_stream.symbol() == '(':
+            self.print_symbol()
+            self.compile_expression_list()
+            self.print_symbol()
+            return
+        if self.input_stream.symbol() == '.':
+            self.print_symbol()
+            self.print_identifier()
+            self.compile_subroutine_call()
+            return
         pass
 
     def compile_do(self) -> None:
         """Compiles a do statement."""
         # Your code goes here!
+        self.print_start('doStatement')
+        self.print_keyword()
+        self.print_identifier()
+        self.print_symbol()
+        self.compile_subroutine_call()
+        self.print_symbol()
+        self.print_end('doStatement')
         pass
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
         # Your code goes here!
+        self.print_start('letStatement')
+        self.print_keyword()
+        self.print_identifier()
+        if self.input_stream.symbol() == '[':
+            self.print_symbol()
+            self.compile_expression()
+            self.print_symbol()
+        self.print_symbol()
+        self.compile_expression()
+        self.print_symbol()
+        self.print_end('letStatement')
         pass
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
         # Your code goes here!
+        self.print_start('whileStatement')
+        self.print_keyword()
+        self.print_symbol()
+        self.compile_expression()
+        self.print_symbol()
+        self.print_symbol()
+        self.compile_statements()
+        self.print_symbol()
+        self.print_end('whileStatement')
         pass
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
         # Your code goes here!
+        self.print_start('returnStatement')
+        self.print_keyword()
+        if self.input_stream.token_type == 'symbol':
+            self.print_symbol()
+            return
+        self.compile_expression()
+        self.print_symbol()
+        self.print_end('returnStatement')
         pass
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
         # Your code goes here!
+        self.print_start('ifStatement')
+        self.print_keyword()
+        self.print_symbol()
+        self.compile_expression()
+        self.print_symbol()
+        self.print_symbol()
+        self.compile_statements()
+        self.print_symbol()
+        if self.input_stream.keyword() == 'else':
+            self.print_keyword()
+            self.print_symbol()
+            self.compile_statements()
+            self.print_symbol()
+        self.print_end('ifStatement')
         pass
+
+    def is_op(self):
+        return self.input_stream.symbol() in\
+            ['+', '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#']
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
         # Your code goes here!
+        self.compile_term()
+        while self.is_op():
+            self.print_symbol()
+            self.compile_term()
         pass
 
     def compile_term(self) -> None:
@@ -167,11 +264,38 @@ class CompilationEngine:
         part of this term and should not be advanced over.
         """
         # Your code goes here!
+        self.print_start('term')
+        if self.input_stream.token_type() == 'symbol':
+            if self.input_stream.symbol() == '(':
+                self.print_symbol()
+                self.compile_expression()
+                self.print_symbol()
+                return
+            elif self.input_stream.symbol() in ['-', '~', '#', '^']:
+                self.print_symbol()
+                self.compile_term()
+        if self.input_stream.token_type() == 'identifier':
+            self.print_identifier()
+            if self.input_stream.symbol() == '[':
+                self.print_symbol()
+                self.compile_expression()
+                self.print_symbol()
+            if self.input_stream.symbol() == '(' or self.input_stream.symbol() == '.':
+                self.compile_subroutine_call()
+            return
+        self.print_end('term')
         pass
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         # Your code goes here!
+        self.print_start('expressionList')
+        if self.input_stream.symbol() is not ')':
+            self.compile_expression()
+        while self.input_stream.symbol() is not ')':
+            self.print_symbol()
+            self.compile_expression()
+        self.print_end('expressionList')
         pass
 
     def print_keyword(self):

@@ -172,7 +172,7 @@ class JackTokenizer:
             return "SYMBOL"
         elif self.current_token.startswith('\"'):
             return "STRING_CONST"
-        elif self.current_token in self.numbers:
+        elif self.current_token[0].isdigit():
             return "INT_CONST"
         else:
             return "IDENTIFIER"
