@@ -7,13 +7,15 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 
+import JackTokenizer
+
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
     output stream.
     """
 
-    def __init__(self, input_stream: "JackTokenizer", output_stream) -> None:
+    def __init__(self, input_stream: "JackTokenizer", output_stream: typing.TextIO) -> None:
         """
         Creates a new compilation engine with the given input and output. The
         next routine called must be compileClass()
@@ -23,17 +25,55 @@ class CompilationEngine:
         # Your code goes here!
         # Note that you can write to output_stream like so:
         # output_stream.write("Hello world! \n")
+        self.output_stream = output_stream
+        self.input_stream = input_stream
+        self.indents = 0
         pass
+
+    def print_indents(self):
+        for i in range(self.indents):
+            self.output_stream.write('\t')
 
     def compile_class(self) -> None:
         """Compiles a complete class."""
         # Your code goes here!
+        self.print_start('class')
+
+        self.print_keyword()
+        self.print_identifier()
+        self.print_symbol()
+
+        self.compile_class_var_dec()
+        while self.input_stream.keyword() == 'function':
+            self.compile_subroutine()
+
+        self.print_symbol()
+        self.print_identifier()
+
+        self.print_end('class')
         pass
 
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""
         # Your code goes here!
+        self.print_start('classVarDec')
+
+        while self.input_stream.keyword() == 'static' or self.input_stream.keyword() == 'field':
+            self.print_vars()
+
+        self.print_end('classVarDec')
         pass
+
+    def print_vars(self):
+        self.print_keyword()
+        if self.input_stream.token_type == 'keyword':
+            self.print_keyword()
+        else:
+            self.print_identifier()
+        self.print_identifier()
+        while self.input_stream.symbol() != ';':
+            self.print_symbol()
+            self.print_identifier()
 
     def compile_subroutine(self) -> None:
         """
@@ -42,6 +82,23 @@ class CompilationEngine:
         you will understand why this is necessary in project 11.
         """
         # Your code goes here!
+        self.print_start('subroutineDec')
+
+        self.print_keyword()
+        self.print_keyword()
+        self.print_identifier()
+        self.print_symbol()
+        self.compile_parameter_list()
+        self.print_symbol()
+
+        self.print_start('subroutineBody')
+        self.print_symbol()
+        self.compile_var_dec()
+
+        self.print_symbol()
+        self.print_end('subroutineBody')
+
+        self.print_end('subroutineDec')
         pass
 
     def compile_parameter_list(self) -> None:
@@ -54,6 +111,12 @@ class CompilationEngine:
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
         # Your code goes here!
+        self.print_start('varDec')
+
+        while self.input_stream.keyword() == 'var':
+            self.print_vars()
+
+        self.print_end('varDec')
         pass
 
     def compile_statements(self) -> None:
@@ -110,3 +173,28 @@ class CompilationEngine:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         # Your code goes here!
         pass
+
+    def print_keyword(self):
+        self.print_indents()
+        self.output_stream.write(f'<keyword> {self.input_stream.keyword()} </keyword>\n')
+        self.input_stream.advance()
+
+    def print_identifier(self):
+        self.print_indents()
+        self.output_stream.write(f'<identifier> {self.input_stream.identifier()} </identifier>\n')
+        self.input_stream.advance()
+
+    def print_symbol(self):
+        self.print_indents()
+        self.output_stream.write(f'<symbol> {self.input_stream.symbol()} </symbol>\n')
+        self.input_stream.advance()
+
+    def print_start(self, word: str):
+        self.print_indents()
+        self.output_stream.write(f'<{word}>\n')
+        self.indents += 1
+
+    def print_end(self, word: str):
+        self.indents -= 1
+        self.print_indents()
+        self.output_stream.write(f'</{word}>\n')

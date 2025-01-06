@@ -100,7 +100,20 @@ class JackTokenizer:
         """
         # Your code goes here!
         # A good place to start is to read all the lines of the input:
-        # input_lines = input_stream.read().splitlines()
+        self.input_lines = input_stream.read().splitlines()
+        self.input_lines.reverse()
+        self.current_line = self.input_lines.pop()
+        self.current_token = ""
+
+        self.keywords = ['class', 'constructor', 'function', 'method', 'field',
+                         'static', 'var', 'int', 'char', 'boolean', 'void', 'true',
+                         'false', 'null', 'this', 'let', 'do', 'if', 'else',
+                         'while', 'return']
+        self.symbols = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+',
+                        '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#']
+
+        self.all_tokens = self.keywords.copy()
+        self.all_tokens.append(self.symbols)
         pass
 
     def has_more_tokens(self) -> bool:
@@ -110,6 +123,7 @@ class JackTokenizer:
             bool: True if there are more tokens, False otherwise.
         """
         # Your code goes here!
+        return len(self.current_token) > 0 or len(self.input_lines) > 0
         pass
 
     def advance(self) -> None:
@@ -118,6 +132,31 @@ class JackTokenizer:
         Initially there is no current token.
         """
         # Your code goes here!
+        index = 0
+        self.current_token = ""
+        if len(self.current_line) == 0:
+            self.current_line = self.input_lines.pop()
+        comment_index = self.current_line.find('//')
+        if comment_index is not -1:
+            self.current_line = self.current_line[:comment_index]
+
+        while not (self.current_line[index:].startswith(' ') or self.current_line[index:].startswith('\t')) \
+                and index < len(self.current_line):
+            index += 1
+
+        for s in self.all_tokens:
+            if self.current_line[index:].startswith(s):
+                self.current_token = s
+                self.current_line = self.current_line[index + len(s):]
+                return
+
+        j = 0
+        while (index + j) < len(self.current_line) \
+                and not self.current_line[index + j] in self.symbols \
+                and not (self.current_line[index + j] == ' ' or self.current_line[index + j] == '\t'):
+            self.current_token += self.current_line[index + j]
+            j += 1
+        self.current_line = self.current_line[index + len(self.current_token):]
         pass
 
     def token_type(self) -> str:
@@ -127,6 +166,16 @@ class JackTokenizer:
             "KEYWORD", "SYMBOL", "IDENTIFIER", "INT_CONST", "STRING_CONST"
         """
         # Your code goes here!
+        if self.current_token in self.keywords:
+            return "KEYWORD"
+        elif self.current_token in self.symbols:
+            return "SYMBOL"
+        elif self.current_token.startswith('\"'):
+            return "STRING_CONST"
+        elif self.current_token in self.numbers:
+            return "INT_CONST"
+        else:
+            return "IDENTIFIER"
         pass
 
     def keyword(self) -> str:
@@ -139,6 +188,7 @@ class JackTokenizer:
             "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
         """
         # Your code goes here!
+        return self.current_token.lower()
         pass
 
     def symbol(self) -> str:
@@ -151,6 +201,7 @@ class JackTokenizer:
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
         # Your code goes here!
+        return self.current_token
         pass
 
     def identifier(self) -> str:
@@ -164,6 +215,7 @@ class JackTokenizer:
                   identifiers, so 'self' cannot be an identifier, etc'.
         """
         # Your code goes here!
+        return self.current_token
         pass
 
     def int_val(self) -> int:
@@ -175,6 +227,7 @@ class JackTokenizer:
             integerConstant: A decimal number in the range 0-32767.
         """
         # Your code goes here!
+        return int(self.current_token)
         pass
 
     def string_val(self) -> str:
@@ -187,4 +240,5 @@ class JackTokenizer:
                       double quote or newline '"'
         """
         # Your code goes here!
+        return self.current_token[1:-1]
         pass
