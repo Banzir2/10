@@ -167,15 +167,15 @@ class JackTokenizer:
         """
         # Your code goes here!
         if self.current_token in self.keywords:
-            return "KEYWORD"
+            return "KEYWORD".lower()
         elif self.current_token in self.symbols:
-            return "SYMBOL"
+            return "SYMBOL".lower()
         elif self.current_token.startswith('\"'):
-            return "STRING_CONST"
+            return "STRING_CONST".lower()
         elif self.current_token[0].isdigit():
-            return "INT_CONST"
+            return "INT_CONST".lower()
         else:
-            return "IDENTIFIER"
+            return "IDENTIFIER".lower()
         pass
 
     def keyword(self) -> str:

@@ -283,6 +283,8 @@ class CompilationEngine:
             if self.input_stream.symbol() == '(' or self.input_stream.symbol() == '.':
                 self.compile_subroutine_call()
             return
+        if self.input_stream.token_type() == 'int_const':
+            self.print_int()
         self.print_end('term')
         pass
 
@@ -311,6 +313,11 @@ class CompilationEngine:
     def print_symbol(self):
         self.print_indents()
         self.output_stream.write(f'<symbol> {self.input_stream.symbol()} </symbol>\n')
+        self.input_stream.advance()
+
+    def print_int(self):
+        self.print_indents()
+        self.output_stream.write(f'<Int.Const.> {self.input_stream.int_val()} </Int.Const.>\n')
         self.input_stream.advance()
 
     def print_start(self, word: str):
