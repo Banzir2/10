@@ -31,8 +31,9 @@ class CompilationEngine:
         pass
 
     def print_indents(self):
-        for i in range(self.indents):
-            self.output_stream.write('\t')
+        #for i in range(self.indents):
+         #   self.output_stream.write('\t')
+        pass
 
     def print_type(self):
         if self.input_stream.token_type == 'keyword':
@@ -112,7 +113,7 @@ class CompilationEngine:
         """
         # Your code goes here!
         self.print_start('parameterList')
-        while self.input_stream.token_type is not 'symbol':
+        while self.input_stream.token_type != 'symbol':
             self.print_type()
             self.print_identifier()
             self.print_symbol()
@@ -292,9 +293,9 @@ class CompilationEngine:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         # Your code goes here!
         self.print_start('expressionList')
-        if self.input_stream.symbol() is not ')':
+        if self.input_stream.symbol() != ')':
             self.compile_expression()
-        while self.input_stream.symbol() is not ')':
+        while self.input_stream.symbol() != ')':
             self.print_symbol()
             self.compile_expression()
         self.print_end('expressionList')

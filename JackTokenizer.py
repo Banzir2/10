@@ -113,7 +113,8 @@ class JackTokenizer:
                         '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#']
 
         self.all_tokens = self.keywords.copy()
-        self.all_tokens.append(self.symbols)
+        for symbol in self.symbols:
+            self.all_tokens.append(symbol)
         pass
 
     def has_more_tokens(self) -> bool:
@@ -137,7 +138,7 @@ class JackTokenizer:
         if len(self.current_line) == 0:
             self.current_line = self.input_lines.pop()
         comment_index = self.current_line.find('//')
-        if comment_index is not -1:
+        if comment_index != -1:
             self.current_line = self.current_line[:comment_index]
 
         while not (self.current_line[index:].startswith(' ') or self.current_line[index:].startswith('\t')) \
