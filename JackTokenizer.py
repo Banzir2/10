@@ -101,8 +101,19 @@ class JackTokenizer:
         # Your code goes here!
         # A good place to start is to read all the lines of the input:
         self.input_lines = input_stream.read().splitlines()
-        self.input_lines.reverse()
-        self.current_line = self.input_lines.pop()
+        for i, line in enumerate(self.input_lines):
+            comment_index = line.find('//')
+            if comment_index != -1:
+                line = line[:comment_index]
+            comment_index = line.find('/**')
+            if comment_index != -1:
+                line = line[:comment_index]
+            self.input_lines[i] = line
+        # Drop comments and whitespaces lines
+        self.input_lines = [line for line in self.input_lines if len(line.strip()) > 0]
+        self.input_lines = [line.split() for i, line in enumerate(self.input_lines)]
+
+        self.current_line = self.input_lines.pop(0)
         self.current_token = ""
 
         self.keywords = ['class', 'constructor', 'function', 'method', 'field',
@@ -112,10 +123,10 @@ class JackTokenizer:
         self.symbols = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+',
                         '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#']
 
-        self.all_tokens = self.keywords.copy()
-        for symbol in self.symbols:
-            self.all_tokens.append(symbol)
-        pass
+        self.names = []
+
+        self.all_tokens = self.keywords.copy() + self.symbols.copy()
+        self.advance()
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -133,32 +144,36 @@ class JackTokenizer:
         Initially there is no current token.
         """
         # Your code goes here!
-        index = 0
-        self.current_token = ""
+        # Initialize the next token
         if len(self.current_line) == 0:
-            self.current_line = self.input_lines.pop()
-        comment_index = self.current_line.find('//')
-        if comment_index != -1:
-            self.current_line = self.current_line[:comment_index]
+            self.current_line = self.input_lines.pop(0)
+        next_token = self.current_line.pop(0)
+        if next_token in (self.all_tokens + self.names):
+            self.current_token = next_token
+            return
 
-        while not (self.current_line[index:].startswith(' ') or self.current_line[index:].startswith('\t')) \
-                and index < len(self.current_line):
-            index += 1
-
-        for s in self.all_tokens:
-            if self.current_line[index:].startswith(s):
-                self.current_token = s
-                self.current_line = self.current_line[index + len(s):]
+        # So far, base form
+        copy_of_next_token = next_token
+        for base_token in (self.all_tokens + self.names):
+            if next_token.startswith(base_token):
+                self.current_token = base_token
+                # Drop the base token in the start
+                next_token = next_token[len(base_token):]
+                self.current_line = [next_token] + self.current_line
                 return
 
-        j = 0
-        while (index + j) < len(self.current_line) \
-                and not self.current_line[index + j] in self.symbols \
-                and not (self.current_line[index + j] == ' ' or self.current_line[index + j] == '\t'):
-            self.current_token += self.current_line[index + j]
-            j += 1
-        self.current_line = self.current_line[index + len(self.current_token):]
-        pass
+            if base_token in copy_of_next_token:
+                # Remove all instances on base_token from next_token
+                if base_token == '.':
+                    copy_of_next_token = copy_of_next_token.split('.')[0]
+                else:
+                    copy_of_next_token = copy_of_next_token.replace(base_token, "")
+
+        if next_token != copy_of_next_token:
+            next_token = next_token.replace(copy_of_next_token, "")
+            self.current_line = [next_token] + self.current_line
+
+        self.current_token = copy_of_next_token
 
     def token_type(self) -> str:
         """
@@ -241,5 +256,5 @@ class JackTokenizer:
                       double quote or newline '"'
         """
         # Your code goes here!
-        return self.current_token[1:-1]
+        return self.current_token[1:-1].strip('\n')
         pass

@@ -31,12 +31,12 @@ class CompilationEngine:
         pass
 
     def print_indents(self):
-        #for i in range(self.indents):
-         #   self.output_stream.write('\t')
+        for i in range(self.indents):
+            self.output_stream.write('\t')
         pass
 
     def print_type(self):
-        if self.input_stream.token_type == 'keyword':
+        if self.input_stream.token_type() == 'keyword':
             self.print_keyword()
         else:
             self.print_identifier()
@@ -80,6 +80,7 @@ class CompilationEngine:
         while self.input_stream.symbol() != ';':
             self.print_symbol()
             self.print_identifier()
+        self.print_symbol()
 
     def compile_subroutine(self) -> None:
         """
@@ -113,7 +114,7 @@ class CompilationEngine:
         """
         # Your code goes here!
         self.print_start('parameterList')
-        while self.input_stream.token_type != 'symbol':
+        while self.input_stream.token_type() != 'symbol':
             self.print_type()
             self.print_identifier()
             self.print_symbol()
@@ -144,13 +145,13 @@ class CompilationEngine:
         while self.is_statement():
             if self.input_stream.keyword() == 'while':
                 self.compile_while()
-            if self.input_stream.keyword() == 'let':
+            elif self.input_stream.keyword() == 'let':
                 self.compile_let()
-            if self.input_stream.keyword() == 'do':
+            elif self.input_stream.keyword() == 'do':
                 self.compile_do()
-            if self.input_stream.keyword() == 'return':
+            elif self.input_stream.keyword() == 'return':
                 self.compile_return()
-            if self.input_stream.keyword() == 'if':
+            elif self.input_stream.keyword() == 'if':
                 self.compile_if()
         pass
 
@@ -159,12 +160,10 @@ class CompilationEngine:
             self.print_symbol()
             self.compile_expression_list()
             self.print_symbol()
-            return
-        if self.input_stream.symbol() == '.':
+        elif self.input_stream.symbol() == '.':
             self.print_symbol()
             self.print_identifier()
             self.compile_subroutine_call()
-            return
         pass
 
     def compile_do(self) -> None:
@@ -173,8 +172,12 @@ class CompilationEngine:
         self.print_start('doStatement')
         self.print_keyword()
         self.print_identifier()
+        if self.input_stream.symbol() == '.':
+            self.print_symbol()
+            self.print_identifier()
         self.print_symbol()
         self.compile_subroutine_call()
+        self.print_symbol()
         self.print_symbol()
         self.print_end('doStatement')
         pass
@@ -214,8 +217,9 @@ class CompilationEngine:
         # Your code goes here!
         self.print_start('returnStatement')
         self.print_keyword()
-        if self.input_stream.token_type == 'symbol':
+        if self.input_stream.token_type() == 'symbol':
             self.print_symbol()
+            self.print_end('returnStatement')
             return
         self.compile_expression()
         self.print_symbol()
@@ -248,11 +252,12 @@ class CompilationEngine:
     def compile_expression(self) -> None:
         """Compiles an expression."""
         # Your code goes here!
+        self.print_start('expression')
         self.compile_term()
         while self.is_op():
             self.print_symbol()
             self.compile_term()
-        pass
+        self.print_end('expression')
 
     def compile_term(self) -> None:
         """Compiles a term. 
@@ -271,20 +276,20 @@ class CompilationEngine:
                 self.print_symbol()
                 self.compile_expression()
                 self.print_symbol()
-                return
             elif self.input_stream.symbol() in ['-', '~', '#', '^']:
                 self.print_symbol()
                 self.compile_term()
-        if self.input_stream.token_type() == 'identifier':
+        elif self.input_stream.token_type() == 'identifier':
             self.print_identifier()
             if self.input_stream.symbol() == '[':
                 self.print_symbol()
                 self.compile_expression()
                 self.print_symbol()
-            if self.input_stream.symbol() == '(' or self.input_stream.symbol() == '.':
+            elif self.input_stream.symbol() == '(' or self.input_stream.symbol() == '.':
                 self.compile_subroutine_call()
-            return
-        if self.input_stream.token_type() == 'int_const':
+        elif self.input_stream.token_type() == 'keyword':
+            self.print_keyword()
+        elif self.input_stream.token_type() == 'int_const':
             self.print_int()
         self.print_end('term')
         pass
