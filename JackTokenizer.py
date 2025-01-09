@@ -135,8 +135,7 @@ class JackTokenizer:
             bool: True if there are more tokens, False otherwise.
         """
         # Your code goes here!
-        return len(self.current_token) > 0 or len(self.input_lines) > 0
-        pass
+        return len(self.current_line) > 0 or len(self.input_lines) > 0
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
@@ -192,7 +191,6 @@ class JackTokenizer:
             return "INT_CONST".lower()
         else:
             return "IDENTIFIER".lower()
-        pass
 
     def keyword(self) -> str:
         """
@@ -205,7 +203,6 @@ class JackTokenizer:
         """
         # Your code goes here!
         return self.current_token.lower()
-        pass
 
     def symbol(self) -> str:
         """
@@ -218,7 +215,6 @@ class JackTokenizer:
         """
         # Your code goes here!
         return self.current_token
-        pass
 
     def identifier(self) -> str:
         """
