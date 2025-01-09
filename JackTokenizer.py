@@ -108,10 +108,13 @@ class JackTokenizer:
             comment_index = line.find('/**')
             if comment_index != -1:
                 line = line[:comment_index]
+            if line.strip().startswith('*'):
+                line = ''
             self.input_lines[i] = line
         # Drop comments and whitespaces lines
         self.input_lines = [line for line in self.input_lines if len(line.strip()) > 0]
-        self.input_lines = [line.split() for i, line in enumerate(self.input_lines)]
+        self.input_lines = [JackTokenizer.split_line(line) for i, line in enumerate(self.input_lines)]
+        self.input_lines = [[a for a in line if len(a) > 0] for line in self.input_lines]
 
         self.current_line = self.input_lines.pop(0)
         self.current_token = ""
@@ -127,6 +130,22 @@ class JackTokenizer:
 
         self.all_tokens = self.keywords.copy() + self.symbols.copy()
         self.advance()
+
+    @staticmethod
+    def split_line(line: str) -> list:
+        new_line = []
+        skip = False
+        word = ""
+        for char in line:
+            if (char == ' ' or char == '\t') and not skip:
+                new_line.append(word)
+                word = ""
+            else:
+                if char == '\"':
+                    skip = not skip
+                word += char
+        new_line.append(word)
+        return new_line
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -144,6 +163,8 @@ class JackTokenizer:
         """
         # Your code goes here!
         # Initialize the next token
+        if len(self.input_lines) == 0:
+            return
         if len(self.current_line) == 0:
             self.current_line = self.input_lines.pop(0)
         next_token = self.current_line.pop(0)
@@ -161,12 +182,9 @@ class JackTokenizer:
                 self.current_line = [next_token] + self.current_line
                 return
 
-            if base_token in copy_of_next_token:
+            if base_token in self.symbols and base_token in copy_of_next_token:
                 # Remove all instances on base_token from next_token
-                if base_token == '.':
-                    copy_of_next_token = copy_of_next_token.split('.')[0]
-                else:
-                    copy_of_next_token = copy_of_next_token.replace(base_token, "")
+                copy_of_next_token = copy_of_next_token.split(base_token)[0]
 
         if next_token != copy_of_next_token:
             next_token = next_token.replace(copy_of_next_token, "")

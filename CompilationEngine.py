@@ -28,11 +28,13 @@ class CompilationEngine:
         self.output_stream = output_stream
         self.input_stream = input_stream
         self.indents = 0
+
+        self.op_dictionary = {'<': '&lt;', '>': '&gt;', '&': '&amp;'}
         pass
 
     def print_indents(self):
         for i in range(self.indents):
-            self.output_stream.write('\t')
+            self.output_stream.write('  ')
         pass
 
     def print_type(self):
@@ -57,7 +59,6 @@ class CompilationEngine:
             self.compile_subroutine()
 
         self.print_symbol()
-        self.print_identifier()
 
         self.print_end('class')
         pass
@@ -65,12 +66,10 @@ class CompilationEngine:
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""
         # Your code goes here!
-        self.print_start('classVarDec')
-
         while self.input_stream.keyword() == 'static' or self.input_stream.keyword() == 'field':
+            self.print_start('classVarDec')
             self.print_vars()
-
-        self.print_end('classVarDec')
+            self.print_end('classVarDec')
         pass
 
     def print_vars(self):
@@ -117,7 +116,8 @@ class CompilationEngine:
         while self.input_stream.token_type() != 'symbol':
             self.print_type()
             self.print_identifier()
-            self.print_symbol()
+            if self.input_stream.symbol() != ')':
+                self.print_symbol()
         self.print_end('parameterList')
         pass
 
@@ -142,6 +142,7 @@ class CompilationEngine:
         "{}".
         """
         # Your code goes here!
+        self.print_start('statements')
         while self.is_statement():
             if self.input_stream.keyword() == 'while':
                 self.compile_while()
@@ -153,6 +154,7 @@ class CompilationEngine:
                 self.compile_return()
             elif self.input_stream.keyword() == 'if':
                 self.compile_if()
+        self.print_end('statements')
         pass
 
     def compile_subroutine_call(self) -> None:
@@ -172,12 +174,7 @@ class CompilationEngine:
         self.print_start('doStatement')
         self.print_keyword()
         self.print_identifier()
-        if self.input_stream.symbol() == '.':
-            self.print_symbol()
-            self.print_identifier()
-        self.print_symbol()
         self.compile_subroutine_call()
-        self.print_symbol()
         self.print_symbol()
         self.print_end('doStatement')
         pass
@@ -306,7 +303,6 @@ class CompilationEngine:
             self.print_symbol()
             self.compile_expression()
         self.print_end('expressionList')
-        pass
 
     def print_keyword(self):
         self.print_indents()
@@ -320,12 +316,15 @@ class CompilationEngine:
 
     def print_symbol(self):
         self.print_indents()
-        self.output_stream.write(f'<symbol> {self.input_stream.symbol()} </symbol>\n')
+        sym = self.input_stream.symbol()
+        if sym in self.op_dictionary.keys():
+            sym = self.op_dictionary[sym]
+        self.output_stream.write(f'<symbol> {sym} </symbol>\n')
         self.input_stream.advance()
 
     def print_int(self):
         self.print_indents()
-        self.output_stream.write(f'<Int.Const.> {self.input_stream.int_val()} </Int.Const.>\n')
+        self.output_stream.write(f'<integerConstant> {self.input_stream.int_val()} </integerConstant>\n')
         self.input_stream.advance()
 
     def print_string(self):
