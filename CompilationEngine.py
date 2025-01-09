@@ -246,7 +246,7 @@ class CompilationEngine:
         pass
 
     def is_op(self):
-        return self.input_stream.symbol() in\
+        return self.input_stream.symbol() in \
             ['+', '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#']
 
     def compile_expression(self) -> None:
@@ -289,6 +289,8 @@ class CompilationEngine:
                 self.compile_subroutine_call()
         elif self.input_stream.token_type() == 'keyword':
             self.print_keyword()
+        elif self.input_stream.token_type() == 'string_const':
+            self.print_string()
         elif self.input_stream.token_type() == 'int_const':
             self.print_int()
         self.print_end('term')
@@ -324,6 +326,11 @@ class CompilationEngine:
     def print_int(self):
         self.print_indents()
         self.output_stream.write(f'<Int.Const.> {self.input_stream.int_val()} </Int.Const.>\n')
+        self.input_stream.advance()
+
+    def print_string(self):
+        self.print_indents()
+        self.output_stream.write(f'<stringConstant> {self.input_stream.string_val()} </stringConstant>\n')
         self.input_stream.advance()
 
     def print_start(self, word: str):
